@@ -27,11 +27,12 @@ function getEmitter() {
                 events.set(event, new Map());
             }
 
+            let boundFunc = handler.bind(context);
             let contexts = events.get(event);
             if (!contexts.has(context)) {
-                contexts.set(context, [handler.bind(context)]);
+                contexts.set(context, [boundFunc]);
             } else {
-                contexts.get(context).push(handler.bind(context));
+                contexts.get(context).push(boundFunc);
             }
 
             return this;
@@ -59,12 +60,13 @@ function getEmitter() {
          * @returns {Object}
          */
         emit: function (event) {
-            while (event !== '') {
-                if (events.has(event)) {
-                    events.get(event)
+            let splitEvents = event.split('.');
+            for (let i = splitEvents.length; i > 0; i--) {
+                let subEvent = splitEvents.slice(0, i).join('.');
+                if (events.has(subEvent)) {
+                    events.get(subEvent)
                         .forEach(context => context.forEach(handler => handler.call(context)));
                 }
-                event = event.substring(0, event.lastIndexOf('.'));
             }
 
             return this;
